@@ -1,4 +1,4 @@
-xquery-target-profiles
+Lilly-target-profiles
 ======================
 
 Collaboration on creating and testing XQuery-based target profiles to run against CCDA documents. This respository is meant to capture work and documentation on the implementation and challenges on creating Target Profiles against CCDA documents. 
