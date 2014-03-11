@@ -1,3 +1,6 @@
+
+[![Build Status](https://travis-ci.org/p2tconsortium/Lilly-target-profiles.png?branch=master)](https://travis-ci.org/p2tconsortium/Lilly-target-profiles)
+
 Lilly-target-profiles
 ======================
 
