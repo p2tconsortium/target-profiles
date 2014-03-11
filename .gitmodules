@@ -1,0 +1,3 @@
+[submodule "sample_ccdas"]
+	path = sample_ccdas
+	url = git@github.com:p2tconsortium/sample_ccdas.git
