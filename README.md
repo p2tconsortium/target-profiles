@@ -17,12 +17,21 @@ This project is a place to demonstrate a library of XQuery functions.
 
 The library is found in the file:
 
+```
 /resources/library.xq
+```
 
-To show how a target profile can be constructed, leveraging the
+To show how the target profile can be constructed, leveraging the
 functions declared in the XQuery library, the project utilizes unit
 tests written for the
 [Clojure programming language](http://www.clojure.org).
+
+An example target profile that the tests will utilize is found in:
+
+```
+/resources/lmrb.xq
+```
+
 
 ### Getting started with the unit tests
 
