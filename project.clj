@@ -9,4 +9,5 @@
   :profiles {:dev {:dependencies [[midje "1.6.2"]
                                   [midje-junit-formatter "0.1.0-SNAPSHOT"]
                                   [org.clojars.runa/conjure "2.2.0"]]
+                   :plugins [[lein-midje "3.1.3"]]
                    :resource-paths ["sample_ccdas/EMERGE"]}}  )
