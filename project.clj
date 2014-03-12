@@ -1,6 +1,6 @@
-(defproject lilly-target-profiles "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+(defproject target-profiles "0.1.0-SNAPSHOT"
+  :description "Demonstrate xquery library functions"
+  :url "http://github.com/p2tconsortium/target-profiles"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.5.1"]

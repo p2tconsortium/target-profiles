@@ -1,6 +1,6 @@
-(ns lilly-target-profiles.core-test
+(ns target-profiles.core-test
   (:require [clojure.test :refer :all]
-            [lilly-target-profiles.core :refer :all]
+            [target-profiles.core :refer :all]
             [saxon :as xml])
   (:use [clojure.java.io :only [resource]]
         [conjure.core :only [stubbing]]

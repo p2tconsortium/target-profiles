@@ -1,4 +1,4 @@
-(ns lilly-target-profiles.core
+(ns target-profiles.core
   (:require [saxon :as xml])
   (:use [clojure.java.io :only [resource]]))
 
