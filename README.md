@@ -1,7 +1,7 @@
 
-[![Build Status](https://travis-ci.org/p2tconsortium/Lilly-target-profiles.png?branch=master)](https://travis-ci.org/p2tconsortium/Lilly-target-profiles)
+[![Build Status](https://travis-ci.org/p2tconsortium/target-profiles.png?branch=master)](https://travis-ci.org/p2tconsortium/target-profiles)
 
-Lilly-target-profiles
+target-profiles
 ======================
 
 Collaboration on creating and testing XQuery-based target profiles to run against CCDA documents. This respository is meant to capture work and documentation on the implementation and challenges on creating Target Profiles against CCDA documents. 
@@ -40,16 +40,16 @@ An example target profile that the tests will utilize is found in:
 
 1) Clone this github repo:
  ```
- $ git clone git@github.com:p2tconsortium/Lilly-target-profiles.git
+ $ git clone git@github.com:p2tconsortium/target-profiles.git
  ```
 2) We have forked
  [the sample_ccdas repository from Boston Children's Hospital](https://github.com/chb/sample_ccdas)
  and are including that fork as a git submodule. After cloning the
- Lilly-target-profiles project, you will need to execute the following
+ target-profiles project, you will need to execute the following
  commands as well:
 
  ```
- $ cd Lilly-target-profiles
+ $ cd target-profiles
  $ git submodule init
  $ git submodule update
  ```
@@ -64,7 +64,7 @@ to manage dependencies and run the tests. Follow the
  $ lein midje :autotest
 
  ======================================================================
- Loading (lilly-target-profiles.core lilly-target-profiles.core-test)
+ Loading (target-profiles.core target-profiles.core-test)
  All checks (41) succeeded.
  [Completed at 16:02:11]
 
