@@ -1,5 +1,7 @@
 import module namespace p2t = https://consortium-data.lillycoi.com/target-profiles"https://consortium-data.lillycoi.com/target-profiles" at "https://github.com/Corengi/target-profiles/blob/master/resources/library.xq";
 
+declare namespace c = 'urn:hl7-org:v3';
+
 declare function local:match-result($root as element(c:ClinicalDocument)) as xs:boolean {
   let $age := p2t:age-in-years(xs:string($root//c:patient[1]/c:birthTime/@value)),
       $is-of-age := $age ge 21,
