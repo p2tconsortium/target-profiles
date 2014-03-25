@@ -20,17 +20,6 @@ declare function p2t:age-in-years($birth as xs:string) as xs:decimal {
   return $years
 };
 
-(:
-declare function p2t:age-in-years( $birth as xs:string ) as xs:integer {
-  let $birthYear := fn:substring($birth, 0, 5),
-    $birthMonth := fn:substring($birth, 5, 2),
-    $birthDay := fn:substring($birth, 7, 2),
-    $birthDate := fn:concat($birthYear, '-', $birthMonth, '-', $birthDay),
-    $currentYear := fn:year-from-dateTime(fn:current-dateTime()),
-    $by := fn:year-from-date(xs:date($birthDate)),
-    $ageInYears := $currentYear - $by return $ageInYears
-};
-:)
 declare function p2t:is-female($patient as element(c:patient)) as xs:boolean {
   let $code := xs:string($patient/c:administrativeGenderCode/@code)
     return $code eq 'F'
@@ -161,3 +150,26 @@ declare function p2t:tumor-stage-t2c-past-60-months($root as element(c:ClinicalD
   return exists(index-of($codes, '261653007'))
 };
 
+declare function p2t:recent-diagnosis($root as element(c:ClinicalDocument), $condition as xs:string,
+                                        $code as xs:string, $months as xs:integer, $exclude as xs:boolean) {
+  let $effectiveTime := p2t:parse-date-time($root/c:effectiveTime/@value), 
+      $windowTime := $effectiveTime - xs:yearMonthDuration(fn:concat('P', $months, 'M')),
+      $diagnosis := for $observation in $root//c:section/c:code[@code='11450-4']/../c:entry/c:act/c:entryRelationship/c:observation/c:code[@code='282291009']/.. 
+  where not(empty($observation/c:effectiveTime/c:low/@value))
+    and $observation/c:value[@code=$code]
+    return if(p2t:parse-date-time($observation/c:effectiveTime/c:low/@value) gt $windowTime) then
+             if($exclude) then
+               concat("Patient not eligible due to diagnosis of ", $observation/c:value/@displayName, 
+                      " on ", p2t:parse-date-time($observation/c:effectiveTime/c:low/@value),
+                      " within last ", $months, " months.")
+             else concat("Patient is eligible with diagnosis of ", $observation/c:value/@displayName, " on ",
+                  p2t:parse-date-time($observation/c:effectiveTime/c:low/@value), ".")
+           else ()
+  return if(exists($diagnosis) and not(empty($diagnosis))) 
+    then not($exclude)
+    else xs:boolean('true')
+}; 
+
+declare function p2t:glp-1-agonists($root as element(c:ClinicalDocument)) as xs:boolean {
+  p2t:taking-medication($root, '744863')
+};
