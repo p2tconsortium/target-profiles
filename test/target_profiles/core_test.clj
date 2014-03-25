@@ -4,10 +4,7 @@
             [saxon :as xml])
   (:use [clojure.java.io :only [resource]]
         [conjure.core :only [stubbing]]
-        [midje.sweet]
-        ))
-
-(reload-library)
+        [midje.sweet]))
 
 (fact "ensure sample_ccdas available"
        (let [ccda (resource "Patient-409.xml")]
@@ -20,9 +17,7 @@
   (let [ccda (resource f)
         lmrb (slurp (resource "lmrb.xq"))]
     (fact (str "Assert " expected " LMRB match for " f)
-          (run-query lmrb "local:lmrb(/c:ClinicalDocument)" ccda) => expected)))
-
-
+          (run-query lmrb ccda) => expected)))
 
 (lmrb-match "Patient-129.xml" true)
 (lmrb-match "Patient-143.xml" true)
@@ -72,3 +67,71 @@
 (lmrb-match "Patient-97.xml" false)
 (lmrb-match "Patient-98.xml" false)
 (lmrb-match "Patient-99.xml" false)
+
+
+(fact "ensure gbdj profile"
+      (nil? (resource "gbdj.xq")) => false)
+
+(facts "gbdj matches"
+       (let [gbdj (slurp (resource "gbdj.xq"))]
+         (fact "Patient-124.xml true match" (run-query gbdj (resource "Patient-124.xml")) => true)
+         (future-fact "Patient-137.xml true match" (run-query gbdj (resource "Patient-137.xml")) => true)
+         (future-fact "Patient-150.xml true match" (run-query gbdj (resource "Patient-150.xml")) => true)
+         (future-fact "Patient-152.xml true match" (run-query gbdj (resource "Patient-152.xml")) => true)
+         (future-fact "Patient-161.xml true match" (run-query gbdj (resource "Patient-161.xml")) => true)
+         (fact "Patient-169.xml true match" (run-query gbdj (resource "Patient-169.xml")) => true)
+         (future-fact "Patient-171.xml true match" (run-query gbdj (resource "Patient-171.xml")) => true)
+         (fact "Patient-181.xml true match" (run-query gbdj (resource "Patient-181.xml")) => true)
+         (future-fact "Patient-184.xml true match" (run-query gbdj (resource "Patient-184.xml")) => true)
+         (future-fact "Patient-2.xml true match" (run-query gbdj (resource "Patient-2.xml")) => true)
+         (fact "Patient-230.xml true match" (run-query gbdj (resource "Patient-230.xml")) => true)
+         (future-fact "Patient-234.xml true match" (run-query gbdj (resource "Patient-234.xml")) => true)
+         (future-fact "Patient-238.xml true match" (run-query gbdj (resource "Patient-238.xml")) => true)
+         (fact "Patient-24.xml true match" (run-query gbdj (resource "Patient-24.xml")) => true)
+         (future-fact "Patient-248.xml true match" (run-query gbdj (resource "Patient-248.xml")) => true)
+         (fact "Patient-258.xml true match" (run-query gbdj (resource "Patient-258.xml")) => true)
+         (future-fact "Patient-26.xml true match" (run-query gbdj (resource "Patient-26.xml")) => true)
+         (future-fact "Patient-282.xml true match" (run-query gbdj (resource "Patient-282.xml")) => true)
+         (fact "Patient-283.xml true match" (run-query gbdj (resource "Patient-283.xml")) => true)
+         (fact "Patient-285.xml true match" (run-query gbdj (resource "Patient-285.xml")) => true)
+         (fact "Patient-303.xml true match" (run-query gbdj (resource "Patient-303.xml")) => true)
+         (future-fact "Patient-312.xml true match" (run-query gbdj (resource "Patient-312.xml")) => true)
+         (future-fact "Patient-322.xml true match" (run-query gbdj (resource "Patient-322.xml")) => true)
+         (future-fact "Patient-325.xml true match" (run-query gbdj (resource "Patient-325.xml")) => true)
+         (fact "Patient-357.xml true match" (run-query gbdj (resource "Patient-357.xml")) => true)
+         (future-fact "Patient-368.xml true match" (run-query gbdj (resource "Patient-368.xml")) => true)
+         (fact "Patient-380.xml true match" (run-query gbdj (resource "Patient-380.xml")) => true)
+         (fact "Patient-390.xml true match" (run-query gbdj (resource "Patient-390.xml")) => true)
+         (fact "Patient-4.xml true match" (run-query gbdj (resource "Patient-4.xml")) => true)
+         (future-fact "Patient-400.xml true match" (run-query gbdj (resource "Patient-400.xml")) => true)
+         (future-fact "Patient-427.xml true match" (run-query gbdj (resource "Patient-427.xml")) => true)
+         (fact "Patient-434.xml true match" (run-query gbdj (resource "Patient-434.xml")) => true)
+         (future-fact "Patient-436.xml true match" (run-query gbdj (resource "Patient-436.xml")) => true)
+         (future-fact "Patient-449.xml true match" (run-query gbdj (resource "Patient-449.xml")) => true)
+         (future-fact "Patient-45.xml true match" (run-query gbdj (resource "Patient-45.xml")) => true)
+         (future-fact "Patient-456.xml true match" (run-query gbdj (resource "Patient-456.xml")) => true)
+         (future-fact "Patient-492.xml true match" (run-query gbdj (resource "Patient-492.xml")) => true)
+         (fact "Patient-500.xml true match" (run-query gbdj (resource "Patient-500.xml")) => true)
+         (fact "Patient-502.xml true match" (run-query gbdj (resource "Patient-502.xml")) => true)
+         (fact "Patient-503.xml true match" (run-query gbdj (resource "Patient-503.xml")) => true)
+         (future-fact "Patient-510.xml true match" (run-query gbdj (resource "Patient-510.xml")) => true)
+         (fact "Patient-513.xml true match" (run-query gbdj (resource "Patient-513.xml")) => true)
+         (fact "Patient-517.xml true match" (run-query gbdj (resource "Patient-517.xml")) => true)
+         (fact "Patient-518.xml true match" (run-query gbdj (resource "Patient-518.xml")) => true)
+         (fact "Patient-542.xml true match" (run-query gbdj (resource "Patient-542.xml")) => true)
+         (future-fact "Patient-558.xml true match" (run-query gbdj (resource "Patient-558.xml")) => true)
+         (fact "Patient-569.xml true match" (run-query gbdj (resource "Patient-569.xml")) => true)
+         (fact "Patient-579.xml true match" (run-query gbdj (resource "Patient-579.xml")) => true)
+         (future-fact "Patient-581.xml true match" (run-query gbdj (resource "Patient-581.xml")) => true)
+         (fact "Patient-582.xml true match" (run-query gbdj (resource "Patient-582.xml")) => true)
+         (fact "Patient-609.xml true match" (run-query gbdj (resource "Patient-609.xml")) => true)
+         (fact "Patient-623.xml true match" (run-query gbdj (resource "Patient-623.xml")) => true)
+         (fact "Patient-632.xml true match" (run-query gbdj (resource "Patient-632.xml")) => true)
+         (fact "Patient-633.xml true match" (run-query gbdj (resource "Patient-633.xml")) => true)
+         (future-fact "Patient-656.xml true match" (run-query gbdj (resource "Patient-656.xml")) => true)
+         (future-fact "Patient-679.xml true match" (run-query gbdj (resource "Patient-679.xml")) => true)
+         (future-fact "Patient-8.xml true match" (run-query gbdj (resource "Patient-8.xml")) => true)
+         (fact "Patient-90.xml true match" (run-query gbdj (resource "Patient-90.xml")) => true)
+         (future-fact "Patient-94.xml true match" (run-query gbdj (resource "Patient-94.xml")) => true)
+
+         (fact "Patient-12.xml false match" (run-query gbdj (resource "Patient-12.xml")) => false)))
