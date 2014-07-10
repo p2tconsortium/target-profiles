@@ -22,12 +22,12 @@ declare function p2t:age-in-years($birth as xs:string) as xs:decimal {
 };
 
 declare function p2t:is-female($patient as element(c:patient)) as xs:boolean {
-  let $code := xs:string($patient/c:administrativeGender-code/@code)
+  let $code := xs:string($patient/c:administrativeGenderCode/@code)
     return $code eq 'F'
 };
 
 declare function p2t:is-male($patient as element(c:patient)) as xs:boolean {
-  let $code := xs:string($patient/c:administrativeGender-code/@code)
+  let $code := xs:string($patient/c:administrativeGenderCode/@code)
     return $code eq 'M'
 };
 
