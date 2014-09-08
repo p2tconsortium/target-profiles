@@ -4,53 +4,61 @@ import module "https://consortium-data.lillycoi.com/target-profiles" at "utils.x
 declare namespace c = 'urn:hl7-org:v3';
 import module namespace functx = "http://www.functx.com" at "https://raw.github.com/p2tconsortium/target-profiles/master/resources/functx.xq";
 
-declare function p2t:medications($root as element(c:ClinicalDocument))  {
-  for $code in $root//c:section/c:code[@code='10160-0']/../c:entry/c:substanceAdministration/c:consumable/c:manufacturedProduct/c:manufacturedMaterial/c:code/@code
-  return normalize-space($code)
+
+declare function p2t:medication-observations($root as element(c:ClinicalDocument), $searchCodes as item()*) as item()* {
+  $root/c:component/c:structuredBody/c:component/c:section[c:code[@code='10160-0']][1]//c:entry/
+        c:substanceAdministration[c:consumable/c:manufacturedProduct/c:manufacturedMaterial/c:code[@code = $searchCodes]]
 };
 
-(: TODO: refactor TPs to use taking-medications instead. Leaving here for now because still used in Lilly TPs :)
-declare function p2t:taking-medication($root as element(c:ClinicalDocument), $med-code as xs:string) as xs:boolean {
-  let $codes := p2t:medications($root)
-  return exists(index-of($codes, $med-code))
+declare function p2t:historical-prescription-for($root as element(c:ClinicalDocument), $searchCodes as item()*) as item()* {
+  p2t:medication-observations($root, $searchCodes)
 };
 
-declare function p2t:taking-medications($root as element(c:ClinicalDocument), $med-codes as item()*) as xs:boolean {
-  let $codes := p2t:medications($root)
-  return exists(functx:value-intersect($codes, $med-codes))
+declare function p2t:medication-codes($root as element(c:ClinicalDocument), $searchCodes as item()*) as item()*  {
+  for $observation in p2t:medication-observations($root, $searchCodes) 
+  return normalize-space($observation/c:consumable/c:manufacturedProduct/c:manufacturedMaterial/c:code/@code)
 };
 
-declare function p2t:medications-within-days($root as element(c:ClinicalDocument),
-                                             $days as xs:integer) {
-  let $effectiveTime := p2t:parse-date-time($root/c:effectiveTime/@value), 
-      $windowTime := $effectiveTime - xs:dayTimeDuration(fn:concat('P', $days, 'D'))
-  for $substanceAdministration in $root//c:section/c:code[@code='10160-0']/../c:entry/c:substanceAdministration     
+declare function p2t:medication-observations-within-n-days($root as element(c:ClinicalDocument), $searchCodes as item()*, $days as xs:integer) as item()* {
+  for $observation in p2t:medication-observations($root, $searchCodes)
+  let
+    $effectiveTime := fn:current-dateTime(),
+    $windowTime := $effectiveTime - xs:dayTimeDuration(fn:concat('P', $days, 'D')),
+    $observationTime := $observation/c:effectiveTime/c:low/@value
   where 
-    ( exists($substanceAdministration/c:effectiveTime/c:high/@value) 
-        and p2t:parse-date-time($substanceAdministration/c:effectiveTime/c:high/@value) gt $windowTime) 
-    or ( not( exists($substanceAdministration/c:effectiveTime/c:high/@value)) 
-        and p2t:parse-date-time($substanceAdministration/c:effectiveTime/c:low/@value) gt $windowTime)
-  return normalize-space($substanceAdministration/c:consumable/c:manufacturedProduct/c:manufacturedMaterial/c:code/@code)
+    ( exists($observation/c:effectiveTime/c:high/@value) 
+        and p2t:parse-date-time($observation/c:effectiveTime/c:high/@value) gt $windowTime) 
+    or ( not( exists($observation/c:effectiveTime/c:high/@value)) 
+        and p2t:parse-date-time($observation/c:effectiveTime/c:low/@value) gt $windowTime)
+  return $observation
 };
 
-declare function p2t:has-n-prescriptions-for($root as element(c:ClinicalDocument), $num-occurrences as xs:integer, $med-codes as item()*) as xs:boolean* {
-  let $ccda-med-codes := p2t:medications($root)
-  for $ccda-code in $ccda-med-codes,
-    $code in $med-codes[. eq $ccda-code]
-  where count($ccda-med-codes[. eq $code]) ge $num-occurrences
-  return true()
+declare function p2t:medication-observations-within-n-months($root as element(c:ClinicalDocument), $searchCodes as item()*, $months as xs:integer) as item()* {
+  for $observation in p2t:medication-observations($root, $searchCodes)
+  let
+    $effectiveTime := fn:current-dateTime(),
+    $windowTime := $effectiveTime - xs:yearMonthDuration(fn:concat('P', $months, 'M')),
+    $observationTime := $observation/c:effectiveTime/c:low/@value
+  where 
+    ( exists($observation/c:effectiveTime/c:high/@value) 
+        and p2t:parse-date-time($observation/c:effectiveTime/c:high/@value) gt $windowTime) 
+    or ( not( exists($observation/c:effectiveTime/c:high/@value)) 
+        and p2t:parse-date-time($observation/c:effectiveTime/c:low/@value) gt $windowTime)
+  return $observation
 };
 
-(: 
-  TODO: Refactor all taking-foo methods pulling the RxNorm codes out into global variables and call p2t:taking-medications($root, [GLOBAL])
-        from target profile definitions.
-:)
-
-declare function p2t:glp-1-agonists($root as element(c:ClinicalDocument)) as xs:boolean {
-  p2t:taking-medications($root, ('744863'))
+declare function p2t:medications-before-n-months($root as element(c:ClinicalDocument), $searchCodes as item()*, $months as xs:integer) as item()* {
+  for $observation in p2t:medication-observations($root, $searchCodes)
+  let
+    $effectiveTime := fn:current-dateTime(),
+    $windowTime := $effectiveTime - xs:yearMonthDuration(fn:concat('P', $months, 'M')),
+    $observationTime := $observation/c:effectiveTime/c:low/@value
+  where exists($observationTime) and p2t:parse-date-time($observationTime) lt $windowTime
+  return $observation
 };
 
-declare function p2t:taking-cyclophosphamide-last-180-days($root as element(c:ClinicalDocument)) as xs:boolean {
-  let $med-codes := p2t:medications-within-days($root, 180)
-  return exists(functx:value-intersect($med-codes, $p2t:cyclophosamide))
+declare function p2t:has-n-prescriptions-for($root as element(c:ClinicalDocument), $numOccurrences as xs:integer, $searchCodes as item()*) as xs:boolean {
+  let $observations := p2t:medication-observations($root, $searchCodes)
+  return count($observations) ge $numOccurrences
 };
+
