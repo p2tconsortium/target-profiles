@@ -1,131 +1,91 @@
 module namespace p2t = "https://consortium-data.lillycoi.com/target-profiles";
-import module "https://consortium-data.lillycoi.com/target-profiles" at "utils.xq", "problem_codes.xq";
-
 declare namespace c = 'urn:hl7-org:v3';
+import module "https://consortium-data.lillycoi.com/target-profiles" at "utils.xq", "problem_codes.xq";
 import module namespace functx = "http://www.functx.com" at "https://raw.github.com/p2tconsortium/target-profiles/master/resources/functx.xq";
 
-declare function p2t:has-problem($root as element(c:ClinicalDocument), $search-codes as item()*)  {
-  let $problem-codes := p2t:problem-codes($root)
-  return exists(functx:value-intersect($problem-codes, $search-codes))
+
+(:
+    Checks for an ACTIVE diagnosis for a problem or condition as defined by a given set of SNOMED and/or ICD-9 codes.
+    The $searchCodes parameter is assumed to represent ONLY ONE condition and only the most recent observation for that condition
+    is analyzed to determine if the problem/condition is still active.
+:)
+declare function p2t:has-problem($root as element(c:ClinicalDocument), $searchCodes as item()*) as item()* {
+  p2t:active-problem-observation($root, $searchCodes)
 };
 
-declare function p2t:has-problem-at-least-n-months($root as element(c:ClinicalDocument), $search-codes as item()*, $months as xs:integer) {
-  let $problem-codes := p2t:problems-before-months($root, $months)
-  return exists(functx:value-intersect($problem-codes, $search-codes))
+(:
+    Returns the most recent active problem observation for a condition. 
+    If the most recent problem observation indicates that the problem is resolved, returns an empty sequence ().
+    
+    Definition of 'active':
+        - A <high> element in effective time indicates a problem that is known to be resolved (pg 448 9.c. ) 
+        - The optional Problem Status template can also include a SNOMED code for active/resolved (pg 451, values on pg 310) 
+        - The most recent observation for a condition does not have negationInd='true'
+        
+    TODO: We might want to handle the case in Figure 214. pg450 of the IG which uses @negationInd with the generic SNOMED code for 'Problem' to indicate 'No known problems'. 
+:)
+declare function p2t:active-problem-observation($root as element(c:ClinicalDocument), $searchCodes as item()*) as item()* {
+  let 
+    $ordered := for $observation in p2t:problem-observations($root, $searchCodes)
+                order by $observation/c:effectiveTime/c:low/@value descending
+                return $observation,
+    $resolvedByHighTime := (exists($ordered[1]) and $ordered[1]/c:effectiveTime/c:high),
+    $resolvedByProblemStatus := (exists($ordered[1]) and $ordered[1]/c:entryRelationship/c:observation[c:code[@code="33999-4"]]/c:value[@code='413322009']),
+    $resolvedByNegationInd := (exists($ordered[1]) and $ordered[1][exists(@negationInd) and @negationInd eq 'true'])
+  return if ($resolvedByHighTime or $resolvedByProblemStatus or $resolvedByNegationInd) then () else ($ordered[1]) 
 };
 
-declare function p2t:has-problem-within-n-months($root as element(c:ClinicalDocument), $search-codes as item()*, $months as xs:integer) {
-  let $problem-codes := p2t:problems-within-months($root, $months)
-  return exists(functx:value-intersect($problem-codes, $search-codes))
+(: 
+    - This method only looks for observations which contain an observation/code with a ProblemType value of 
+        Diagnosis 282291009, Problem 55607006, or Condition 64572001. See IG page 448 #6
+    - Results exclude any observations which have a @negationInd of true. This means the problem was observed not to be present. 
+    - Also searches for Problem Observation templates in EncounterDiagnosis template in the Encounters section.
+    - Can match against ICD-9 codes in <translation> elements.
+:)
+declare function p2t:problem-observations($root as element(c:ClinicalDocument), $searchCodes as item()*) as item()* {
+  let 
+    $problemsSection := $root/c:component/c:structuredBody/c:component/c:section[c:code[@code eq '11450-4']][1], (: extracting problems section and using index for performance :)
+    $problemObservations := $problemsSection//c:entry/c:act/c:entryRelationship/c:observation[
+          c:value[@code = $searchCodes] (: SNOMED :) or c:value/c:translation[@codeSystem eq "2.16.840.1.113883.6.2"][@code = $searchCodes] (: ICD-9 :)
+        ][ 
+          c:code[@code eq '282291009'] or c:code[@code eq '55607006'] or c:code[@code eq '64572001'] (: ProblemTypes: Diagnosis, Problem, Condition :)
+        ][
+          not(@negationInd) or @negationInd != 'true'
+        ],
+    $encountersSection := ($root/c:component/c:structuredBody/c:component/c:section[c:code[@code eq '46240-8']])[1],
+    $encountersDiagnoses := $encountersSection/c:entry/c:encounter/c:entryRelationship/c:act/c:entryRelationship/c:observation[
+          c:value[@code = $searchCodes] (: SNOMED :) or c:value/c:translation[@codeSystem eq "2.16.840.1.113883.6.2"][@code = $searchCodes] (: ICD-9 :)
+        ][ 
+          c:code[@code eq '282291009'] or c:code[@code eq '55607006'] or c:code[@code eq '64572001'] (: ProblemTypes: Diagnosis, Problem, Condition :)
+        ][
+          not(@negationInd) or @negationInd != 'true'
+        ]
+  return ($problemObservations, $encountersDiagnoses)
 };
 
-(: TODO: Add support for ICD-9/10 codes :)
-declare function p2t:problem-codes($root as element(c:ClinicalDocument))  {
+declare function p2t:problem-observations-before-n-months($root as element(c:ClinicalDocument), $searchCodes as item()*, $months as xs:integer) as item()* {
+  for $observation in p2t:active-problem-observation($root, $searchCodes)
+  let
+    $effectiveTime := fn:current-dateTime(),
+    $windowTime := $effectiveTime - xs:yearMonthDuration(fn:concat('P', $months, 'M')),
+    $observationTime := $observation/c:effectiveTime/c:low/@value
+  where exists($observationTime) and p2t:parse-date-time($observationTime) lt $windowTime
+  return $observation
+};
+
+declare function p2t:problem-observations-within-n-months($root as element(c:ClinicalDocument), $searchCodes as item()*, $months as xs:integer) as item()* {
+  for $observation in p2t:active-problem-observation($root, $searchCodes)
+  let
+    $effectiveTime := fn:current-dateTime(),
+    $windowTime := $effectiveTime - xs:yearMonthDuration(fn:concat('P', $months, 'M')),
+    $observationTime := $observation/c:effectiveTime/c:low/@value
+  where exists($observationTime) and p2t:parse-date-time($observationTime) gt $windowTime
+  return $observation
+};
+
+(: May be useful for testing... :)
+(:declare function p2t:problem-codes($root as element(c:ClinicalDocument))  {
   for $code in $root//c:section/c:code[@code='11450-4']/../c:entry/c:act/c:entryRelationship/c:observation/c:value/@code
     return normalize-space($code)
-};
+};:)
 
-declare function p2t:problems-within-months($root as element(c:ClinicalDocument),
-                                             $months as xs:integer) {
-  let $effectiveTime := p2t:parse-date-time($root/c:effectiveTime/@value),
-      $windowTime := $effectiveTime - xs:yearMonthDuration(fn:concat('P', $months, 'M')),
-      $observations := $root//c:section/c:code[@code='11450-4']/../c:entry/c:act/c:entryRelationship/c:observation/c:code[@code='282291009']/..
-  for $observation in $observations
-    let $observationTime := $observation/c:effectiveTime/c:low/@value
-    where not(empty($observationTime)) and p2t:parse-date-time($observationTime) gt $windowTime
-    return normalize-space($observation/c:value/@code)
-};
-
-declare function p2t:problems-before-months($root as element(c:ClinicalDocument),
-                                             $months as xs:integer) {
-  let $effectiveTime := fn:current-dateTime(),
-      $windowTime := $effectiveTime - xs:yearMonthDuration(fn:concat('P', $months, 'M')),
-      $observations := $root//c:section/c:code[@code='11450-4']/../c:entry/c:act/c:entryRelationship/c:observation/c:code[@code='282291009']/..
-  for $observation in $observations
-    let $observationTime := $observation/c:effectiveTime/c:low/@value
-    where not(empty($observationTime)) and p2t:parse-date-time($observationTime) lt $windowTime
-    return normalize-space($observation/c:value/@code)
-};
-
-(: This is an unused example of returning more informative results rather than just pass/fail :)
-declare function p2t:recent-diagnosis($root as element(c:ClinicalDocument), $condition as xs:string,
-                                        $code as xs:string, $months as xs:integer, $exclude as xs:boolean) {
-  let $effectiveTime := p2t:parse-date-time($root/c:effectiveTime/@value), 
-      $windowTime := $effectiveTime - xs:yearMonthDuration(fn:concat('P', $months, 'M')),
-      $diagnosis := for $observation in $root//c:section/c:code[@code='11450-4']/../c:entry/c:act/c:entryRelationship/c:observation/c:code[@code='282291009']/.. 
-  where not(empty($observation/c:effectiveTime/c:low/@value))
-    and $observation/c:value[@code=$code]
-    return if(p2t:parse-date-time($observation/c:effectiveTime/c:low/@value) gt $windowTime) then
-             if($exclude) then
-               concat("Patient not eligible due to diagnosis of ", $observation/c:value/@displayName, 
-                      " on ", p2t:parse-date-time($observation/c:effectiveTime/c:low/@value),
-                      " within last ", $months, " months.")
-             else concat("Patient is eligible with diagnosis of ", $observation/c:value/@displayName, " on ",
-                  p2t:parse-date-time($observation/c:effectiveTime/c:low/@value), ".")
-           else ()
-  return if(exists($diagnosis) and not(empty($diagnosis))) 
-    then not($exclude)
-    else xs:boolean('true')
-}; 
-
-(: Not updating Lilly TPs to use new style functions for now so leaving these functions as is :)
-
-declare function p2t:is-type2($root as element(c:ClinicalDocument)) as xs:boolean {
-  let $codes := p2t:problem-codes($root)
-  return exists(index-of($codes, '44054006'))
-};
-
-declare function p2t:is-renal-disease($root as element(c:ClinicalDocument)) as xs:boolean {
-  let $codes := p2t:problem-codes($root)
-  return exists(index-of($codes, '46177005'))
-};
-
-declare function p2t:acute-renal-failure($root as element(c:ClinicalDocument)) as xs:boolean {
-  let $codes := p2t:problem-codes($root)
-  return exists(index-of($codes, '14669001'))
-};
-
-declare function p2t:acute-myocardial-infarction-past-6-months($root as element(c:ClinicalDocument)) as xs:boolean {
-  let $codes := p2t:problems-within-months($root, 6)
-  return exists(index-of($codes, '57054005'))
-};
-
-declare function p2t:acute-q-wave-myocardial-infarction-past-6-months($root as element(c:ClinicalDocument)) as xs:boolean {
-  let $codes := p2t:problems-within-months($root, 6)
-  return exists(index-of($codes, '304914007'))
-};
-
-declare function p2t:malignant-prostate-tumor-past-60-months($root as element(c:ClinicalDocument)) as xs:boolean {
-  let $codes := p2t:problems-within-months($root, 60)
-  return exists(index-of($codes, '399068003'))
-};
-
-declare function p2t:tumor-stage-t1c-past-60-months($root as element(c:ClinicalDocument)) as xs:boolean {
-  let $codes := p2t:problems-within-months($root, 60)
-  return exists(index-of($codes, '261650005'))
-};
-
-declare function p2t:secondary-malignant-neoplasm-of-bone-past-60-months($root as element(c:ClinicalDocument)) as xs:boolean {
-  let $codes := p2t:problems-within-months($root, 60)
-  return exists(index-of($codes, '94222008'))
-};
-
-declare function p2t:neoplasm-of-colon-past-60-months($root as element(c:ClinicalDocument)) as xs:boolean {
-  let $codes := p2t:problems-within-months($root, 60)
-  return exists(index-of($codes, '126838000'))
-};
-
-declare function p2t:malignant-neoplasm-of-female-breast-past-60-months($root as element(c:ClinicalDocument)) as xs:boolean {
-  let $codes := p2t:problems-within-months($root, 60)
-  return exists(index-of($codes, '188161004'))
-};
-
-declare function p2t:hormone-receptor-positive-tumor-past-60-months($root as element(c:ClinicalDocument)) as xs:boolean {
-  let $codes := p2t:problems-within-months($root, 60)
-  return exists(index-of($codes, '417742002'))
-};
-
-declare function p2t:tumor-stage-t2c-past-60-months($root as element(c:ClinicalDocument)) as xs:boolean {
-  let $codes := p2t:problems-within-months($root, 60)
-  return exists(index-of($codes, '261653007'))
-};
