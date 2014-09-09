@@ -1,7 +1,7 @@
 module namespace p2t = "https://consortium-data.lillycoi.com/target-profiles";
 declare namespace c = 'urn:hl7-org:v3';
 import module "https://consortium-data.lillycoi.com/target-profiles" at "utils.xq", "assessment_scale_codes.xq";
-import module namespace functx = "http://www.functx.com" at "https://raw.github.com/p2tconsortium/target-profiles/master/resources/functx.xq";
+import module namespace functx = "http://www.functx.com" at "https://raw.github.com/Corengi/target-profiles/master/resources/functx.xq";
 
 (:
     Returns a sequence containing the most recent assessment result as an xs:decimal or the empty sequence if no values 
