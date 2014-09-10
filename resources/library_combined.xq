@@ -55,7 +55,7 @@ declare function p2t:assessment-increasing-within-n-months($root as element(c:Cl
   return if (exists($observations)) then xs:decimal(normalize-space($observations[1]/c:value/@value)) gt xs:decimal(normalize-space($observations[last()]/c:value/@value)) else false()
 };
 
-declare variable $p2t:EDSS as xs:string* := ('273554001'); (: Does not have a LOINC code :)module namespace p2t = "https://consortium-data.lillycoi.com/target-profiles";
+declare variable $p2t:EDSS as xs:string* := ('273554001'); (: Does not have a LOINC code :)
 
 declare variable $p2t:acyclovir as xs:string* := ('307730', '1250667', '998422', '141859', '197312', '313812', '415660',
     '197310', '199524', '197311', '1423662', '197313');
