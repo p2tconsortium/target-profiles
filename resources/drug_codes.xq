@@ -1,3 +1,9 @@
+(:~
+: This module contains variable declarations of pharmaceuticals for use in target profile criteria.
+: @see medications.xq
+: @author Jesse Clark
+: @version 0.1
+:)
 module namespace p2t = "https://consortium-data.lillycoi.com/target-profiles";
 
 declare variable $p2t:acyclovir as xs:string* := ('307730', '1250667', '998422', '141859', '197312', '313812', '415660',

@@ -1,3 +1,9 @@
+(:~
+: This module contains utility functions for parsing CCDs.
+:
+: @author Jesse Clark && LillyCOI development team
+: @version 0.2
+:)
 module namespace p2t = "https://consortium-data.lillycoi.com/target-profiles";
 
 declare function p2t:parse-date-time($dt as xs:string) as xs:dateTime {
