@@ -1,3 +1,9 @@
+(:~
+: This module contains variable declarations for problem diagnoses codes for use in criteria.
+: @see problems.xq
+: @author Jesse Clark
+: @version 0.1
+:)
 module namespace p2t = "https://consortium-data.lillycoi.com/target-profiles";
 
 declare variable $p2t:acute-coronary-syndrome as xs:string* := ('84757009');

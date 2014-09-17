@@ -1,3 +1,9 @@
+(:~
+: This module contains variable declarations for procedure codes for use in criteria.
+: @see procedures.xq
+: @author Jesse Clark
+: @version 0.1
+:)
 module namespace p2t = "https://consortium-data.lillycoi.com/target-profiles";
 
 declare variable $p2t:dialysis as xs:string* := ('90935');

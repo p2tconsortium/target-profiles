@@ -1,3 +1,9 @@
+(:~
+: This module contains variable declarations for lab test codes for use in criteria.
+: @see labs.xq
+: @author Jesse Clark
+: @version 0.1
+:)
 module namespace p2t = "https://consortium-data.lillycoi.com/target-profiles";
 
 declare variable $p2t:a1c as xs:string* := ('4548-4');
