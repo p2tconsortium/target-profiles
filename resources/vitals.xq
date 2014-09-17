@@ -1,6 +1,6 @@
 module namespace p2t = "https://consortium-data.lillycoi.com/target-profiles";
 declare namespace c = 'urn:hl7-org:v3';
-import module "https://consortium-data.lillycoi.com/target-profiles" at "utils.xq";
+import module "https://consortium-data.lillycoi.com/target-profiles" at "https://raw.github.com/p2tconsortium/target-profiles/master/resources/utils.xq";
 
 (:
   TODO: This could break if birthTime has @nullFlavor='NAV' and no @value. Check for existence first.
