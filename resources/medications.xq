@@ -1,8 +1,8 @@
 module namespace p2t = "https://consortium-data.lillycoi.com/target-profiles";
-import module "https://consortium-data.lillycoi.com/target-profiles" at "https://raw.github.com/Corengi/target-profiles/master/resources/utils.xq", "https://raw.github.com/Corengi/target-profiles/master/resources/drug_codes.xq";
+import module "https://consortium-data.lillycoi.com/target-profiles" at "https://raw.github.com/p2tconsortium/target-profiles/master/resources/utils.xq", "https://raw.github.com/p2tconsortium/target-profiles/master/resources/drug_codes.xq";
 
 declare namespace c = 'urn:hl7-org:v3';
-import module namespace functx = "http://www.functx.com" at "https://raw.github.com/Corengi/target-profiles/master/resources/functx.xq";
+import module namespace functx = "http://www.functx.com" at "https://raw.github.com/p2tconsortium/target-profiles/master/resources/functx.xq";
 
 
 declare function p2t:medication-observations($root as element(c:ClinicalDocument), $searchCodes as item()*) as item()* {

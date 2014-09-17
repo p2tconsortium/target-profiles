@@ -1,6 +1,6 @@
 module namespace p2t = "https://consortium-data.lillycoi.com/target-profiles";
 declare namespace c = 'urn:hl7-org:v3';
-import module namespace functx = "http://www.functx.com" at "https://raw.github.com/Corengi/target-profiles/master/resources/functx.xq";
+import module namespace functx = "http://www.functx.com" at "https://raw.github.com/p2tconsortium/target-profiles/master/resources/functx.xq";
 
 
 declare variable $p2t:EDSS as xs:string* := ('273554001'); (: Does not have a LOINC code :)
